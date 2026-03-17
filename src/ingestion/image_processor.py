@@ -11,10 +11,13 @@ class ImageParser(BaseParser):
         chunks = []
         document_id = file_path.name
 
-        img = Image.open(file_path).convert("RGB")
-        img.thumbnail((2000, 2000)) # Optimize for OCR speed
+        try:
+            img = Image.open(file_path).convert("RGB")
+        except Exception:
+            return []
 
-        # -------- 1. EXTRACT TEXT --------
+        img.thumbnail((2000, 2000))
+
         gray = img.convert("L")
         text = pytesseract.image_to_string(gray)
 
@@ -23,12 +26,11 @@ class ImageParser(BaseParser):
                 "content": text,
                 "metadata": {
                     "document_id": document_id,
-                    "page_number": 1, # Hardcoded because a standalone image is effectively one page
+                    "page_number": 1,
                     "content_type": "text"
                 }
             })
 
-        # -------- 2. RETAIN IMAGE CONTEXT --------
         chunks.append({
             "content": str(file_path),
             "metadata": {

@@ -73,19 +73,22 @@ class PDFParser(BaseParser):
             # -------- 2. IMAGE EXTRACTION --------
             img_list = page.get_images(full=True)
 
+            # IMAGE EXTRACTION FIX
             for img in img_list:
                 xref = img[0]
                 if xref in seen_xrefs:
                     continue
                 seen_xrefs.add(xref)
 
-                # Extract raw byte stream from the PDF
-                image = doc.extract_image(xref)
-                image_bytes = image["image"]
+                try:
+                    image = doc.extract_image(xref)
+                    image_bytes = image["image"]
 
-                # Normalize the image using PIL
-                pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-                pil_img.thumbnail((2000, 2000)) # Prevent massive images from crashing the pipeline
+                    pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+                except Exception:
+                    continue
+
+                pil_img.thumbnail((2000, 2000))
 
                 image_path = self.image_output_dir / f"{file_path.stem}_p{page_number}_img{xref}.png"
                 pil_img.save(image_path)
@@ -115,7 +118,10 @@ class PDFParser(BaseParser):
                     })
 
             # -------- 3. TABLE EXTRACTION --------
-            tables = page.find_tables()
+            try:
+                tables = page.find_tables()
+            except Exception:
+                tables = None
 
             for table in tables.tables:
                 data = table.extract()
