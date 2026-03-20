@@ -1,0 +1,21 @@
+services:
+  api:
+    build: .
+    container_name: rag_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./sample_documents:/app/sample_documents
+      - ./data/chroma:/app/data/chroma
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: rag_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
